@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nc13.mappers.BoardMapper">
+    <!--
+        #{} 과 ${}의 차이
+        #{}: 안에 들어간 값을'' 으로 감싸준다.
+        ${}: 안에 들어간 값을 감싸주지 않는다.
+        만약 우리가 값을 입력할 때에는 입력할 값을 '' 으로 감싸주는게 맞지만
+        Limit 과같은 쿼리에 어떤 값을 넣을 때는 ''으로 감싸면 에러가 난다.
+    -->
+   <select id="selectAll" resultType="boardDTO" parameterType="hashmap">
+       SELECT * FROM board
+       INNER JOIN user
+       ON board.writer_id=user.id
+       ORDER BY board.id DESC
+       LIMIT ${startRow},${size}
+   </select>
+
+    <insert id="insert" parameterType="boardDTO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO board(title,content, writer_id)
+        VALUES(#{title}, #{content}, #{writerId})
+    </insert>
+
+    <select id="selectOne" parameterType="int" resultType="boardDTO">
+        SELECT * FROM board
+        INNER JOIN user
+        ON board.writer_id=user.id
+        WHERE board.id=#{id}
+    </select>
+
+    <update id="update" parameterType="boardDTO">
+        UPDATE board
+        SET title=#{title},
+        content=#{content},
+        modify_date=NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="int">
+        DELETE FROM board
+        WHERE id=#{id}
+    </delete>
+
+    <select id="selectMaxRow" resultType="int">
+        SELECT COUNT(*) FROM board
+    </select>
+</mapper>
