@@ -16,7 +16,7 @@ public class UserRestController {
     UserService userService;
 
     @GetMapping("validateUsername")
-    public Map<String, Object> validateUserbane(String username){
+    public Map<String, Object> validateUsername(String username){
         Map<String, Object> resultMap=new HashMap<>();
         boolean result= userService.validateUsername(username);
         System.out.println("username: " +  username);

@@ -37,7 +37,7 @@
     </form>
 </div>
 <script>
-    ClassicEditor.create(
+    ClassicEditor.create(           //ck에딧
         document.querySelector('#input_content')
     ).catch(error => {
         console.log(error)

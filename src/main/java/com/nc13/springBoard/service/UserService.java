@@ -42,4 +42,9 @@ public class UserService {
         SESSION.insert(NAMESPACE+".register",attempt);
     }
 
+    public UserDTO selectByUsername(String username) {
+        return SESSION.selectOne(NAMESPACE+".selectByUsername",username);
+    }
+
+
 }

@@ -8,20 +8,28 @@ import com.nc13.springBoard.service.BoardService;
 import com.nc13.springBoard.service.ReplyService;
 import com.nc13.springBoard.service.UserService;
 import jakarta.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+
 
 @Controller
 @RequestMapping("/board/")
@@ -37,11 +45,9 @@ public class BoardController {
     }
 
     @GetMapping("showAll/{pageNo}")
-    public String showAll(HttpSession session, Model model, @PathVariable int pageNo) {
-        UserDTO logIn = (UserDTO) session.getAttribute("logIn");
-        if (logIn == null) {
-            return "redirect:/";
-        }
+
+    public String showAll(Model model, @PathVariable int pageNo, HttpSession session, Authentication authentication) {
+
         // 가장 마지막 페이지의 번호
         int maxPage = boardService.selectMaxPage();
         model.addAttribute("maxPage", maxPage);
@@ -86,30 +92,19 @@ public class BoardController {
     }
 
     @GetMapping("write")
-    public String showWrite(HttpSession session) {
-        UserDTO logIn = (UserDTO) session.getAttribute("logIn");
-        if (logIn == null) {
-            return "redirect:/";
-        }
+    public String showWrite() {
         return "board/write";
     }
 
     @PostMapping("write")
-    public String write(HttpSession session, BoardDTO boardDTO, MultipartFile[] file) {
-        UserDTO logIn = (UserDTO) session.getAttribute("logIn");
-        if (logIn == null) {
-            return "redirect:/";
-        }
+    public String write(BoardDTO boardDTO, Authentication authentication) {
+        //String path = "c:\\uploads\\a\\bb\\dd";        //어디에 파일 업로드 할래?
 
-        boardDTO.setWriterId(logIn.getId());
-
-        String path = "c:\\uploads\\a\\bb\\cc";        //어디에 파일 업로드 할래?
-
-        File pathDir = new File(path);
-        if (pathDir.exists()){
+        /*File pathDir = new File(path);
+        if (!pathDir.exists()){
             pathDir.mkdirs();
         }
-        new File(path).mkdirs();        //없으면 이 위치에 폴더를 만들어줘 임
+        //new File(path).mkdirs();        //없으면 이 위치에 폴더를 만들어줘 임
 
         //File f = new File(path, file.getOriginalFilename()); // 어디에 (path)dp 어떤 파일을 저장할껀지 file.getOriginalFilename는 파일의 업로드 이름임
         // 멀티파트파일은 스프링 프레임워크가 어느정도 보정을 해준다.
@@ -122,9 +117,10 @@ public class BoardController {
 
         } catch (Exception e) {
             e.printStackTrace();
-        }
-
-        //boardService.insert(boardDTO);
+        }*/
+        UserDTO logIn= (UserDTO) authentication.getPrincipal();
+        boardDTO.setWriterId(logIn.getId());
+        boardService.insert(boardDTO);
 
         return "redirect:/board/showOne/" + boardDTO.getId();
     }
@@ -144,10 +140,10 @@ public class BoardController {
             return "redirect:/showMessage";
         }
 
-        List<ReplyDTO> replYList = replyService.selectAll(id);
+        List<ReplyDTO> replyList = replyService.selectAll(id);
 
         model.addAttribute("boardDTO", boardDTO);
-        model.addAttribute("replyList", replYList);
+        model.addAttribute("replyList", replyList);
 
         return "board/showOne";
     }
@@ -222,6 +218,47 @@ public class BoardController {
         return "redirect:/board/showAll";
     }
 
+    // 일반 컨트롤러 안에
+    // Restful API로써, JSON의 결과값을 리턴해야하는 경우
+    // 맵핑 어노테이션 위에 ResponseBody 어노테이션을 붙여준다. 어떤 주소로 이동해라가 아니라 바로바로 리턴해줌
+    // 따라서 우리가 하고 싶은건 글 작성할때 그림을 업로드 하고싶을때 바로 업로드가 되도록 하는 애
+    @ResponseBody
+    @PostMapping("uploads")
+    public Map<String, Object> uploads(MultipartHttpServletRequest request){
+        Map<String, Object> resultMap=new HashMap<>();
+
+        String uploadPath="";
+
+        MultipartFile file = request.getFile("upload");
+        String fileName=file.getOriginalFilename();
+        String extension=fileName.substring(fileName.lastIndexOf("."));// 파일 이름 보면 다운로드/jpg , 내음악.mp3 이런거 찾아내는 애
+        String uploadName = UUID.randomUUID()+extension;
+
+        String realPath=request.getServletContext().getRealPath("/board/uploads/");//돌아가는 톰캣의 실제 주소 찾는 메서드
+        Path realDir= Paths.get(realPath);
+        if(!Files.exists(realDir)){
+            try{
+                Files.createDirectories(realDir);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+
+        File uploadFile = new File(realPath+uploadName);
+        try {
+            file.transferTo(uploadFile);
+        } catch (IOException e){
+            System.out.println("파일 전송 중 에러");
+            e.printStackTrace();
+        }
+
+        // 업로드 경로의 내용
+        uploadPath = "/board/uploads/"+uploadName;
+
+        resultMap.put("uploaded",true);
+        resultMap.put("url", uploadPath);
+        return resultMap;
+    }
     /*@GetMapping("test")
     public String test(HttpSession session) {
         UserDTO logIn = (UserDTO) session.getAttribute("logIn");

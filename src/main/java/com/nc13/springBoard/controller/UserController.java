@@ -5,6 +5,7 @@ import com.nc13.springBoard.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +19,8 @@ public class UserController {
     // 실제 SQL 통신을 담당할 Service 객체
     @Autowired          //생성자 자동주입할수 있게 하는애
     private UserService userService;
+    @Autowired
+    private BCryptPasswordEncoder encoder;
     // 사용자가 로그인을 할 시 실행할
     // auth 메소드                     -> 로그아웃시 정지와 같은 역할을 한다??
     @PostMapping("auth")            // 인덱스에서 포스트로 값을 받아왔기 때문에 포스트 매핑을 이용
@@ -27,6 +30,7 @@ public class UserController {
     // 또한, 해당 name 어트리뷰트를 필드로 가진 클래스 객체를 파라미터로 잡아주면
     // 자동으로 데이터가 바인딩 된다.
     public String auth(UserDTO userDTO, HttpSession session) {
+
         UserDTO result=userService.auth(userDTO);
         if (result != null) {
             session.setAttribute("logIn",result);
@@ -46,6 +50,7 @@ public class UserController {
     @PostMapping("register")
     public String register(UserDTO userDTO, RedirectAttributes redirectAttributes){
         if (userService.validateUsername(userDTO.getUsername())){
+            userDTO.setPassword(encoder.encode(userDTO.getPassword()));
             userService.register(userDTO);
             System.out.println("회원가입 성공!!!");
         } else{

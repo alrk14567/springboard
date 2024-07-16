@@ -50,10 +50,7 @@ public class ReplyController {
         }
 
         ReplyDTO origin = replyService.selectOne(id);
-        if (origin == null) {
-            redirectAttributes.addFlashAttribute("message", "유효하지 않은 댓글 번호입니다.");
-            return "redirect:/showMessage";
-        }
+
 
         if(origin.getWriterId() != logIn.getId()){
             redirectAttributes.addFlashAttribute("message","권한이 없습니다.");

@@ -15,7 +15,8 @@
         WHERE username=#{username}
     </select>
     <insert id="register" parameterType="userDTO">
-        INSERT INTO user(username,password,nickname)
-        VALUES(#{username}, #{password}, #{nickname})
+        INSERT INTO user(username,password,nickname,role)
+        VALUES(#{username}, #{password}, #{nickname},'USER')
     </insert>
+
 </mapper>

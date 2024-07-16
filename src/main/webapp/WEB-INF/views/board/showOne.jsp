@@ -116,7 +116,7 @@
 <script>
     function deleteBoard(id){
         console.log(id);
-        Swal.fire({
+        Swal.fire({                                 // J 쿼리??? 스크립트?? 스윗alert
             title: '정말로 삭제하시겠습니까?',
             showCancelButton:true,
             confirmButtonText : '삭제하기',
